@@ -21,27 +21,34 @@ rutas = {
     "Zerind": {"Arad": 75, "Oradea": 71}
 }
 
-def actions(rutaActual):
-    return rutas[rutaActual]
 
-def allpaths(rutaActual, rutaFinal, visitados=[]):
-    nueva_ruta=visitados+[rutaActual]
-    if rutaActual==rutaFinal:
-        return [nueva_ruta]
+def breadth_first_search(nodoInicial, nodoFinal): # Busca todos los caminos y los recorre al mismo momento
+    frontier=[nodoInicial]
+    visited=[nodoInicial]
+    recorridos=[]
 
-    posiblesCaminos =[]
-    vecinos=list(rutas[rutaActual])
-    i = 0
-    while i < len(vecinos):
-        ciudad_vecina = vecinos[i]
-        if ciudad_vecina not in visitados: 
-            # Recursividad para seguir las mismas reglas sin repetición (visitados) pero para las demás rutas
-            resultados = allpaths(ciudad_vecina, rutaFinal, nueva_ruta)
-            posiblesCaminos += resultados
+    while(True):
+        if (frontier[0]==nodoFinal): # si ya encontro a el nodoFinal
+            return find_path(nodoInicial, nodoFinal, recorridos) #Este solo retorna la solucion 
+        if (frontier==[]):
+            return "No hay solucion"
         
-        i += 1
+        hijos=list(rutas[frontier[0]].keys())
+        for hijo in hijos:
+            if hijo not in visited:
+                visited+=[hijo]
+                frontier+=[hijo]
+                recorridos+=[(frontier[0],hijo)] # Aqui registramos los caminos en tuplas (padre,hijo) para imprimir la solucion al final
         
-    return posiblesCaminos
+        frontier=frontier[1:]
 
-
-
+def find_path(nodoInicial, nodoFinal, recorridos):
+    path =[nodoFinal]
+    while nodoFinal!=nodoInicial:
+        for padreHijo in recorridos:
+            if padreHijo[1]== nodoFinal:
+                nodoFinal =padreHijo[0]
+                path =[nodoFinal]+path
+    
+    return path
+    
