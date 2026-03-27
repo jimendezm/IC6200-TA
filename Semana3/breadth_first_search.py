@@ -1,3 +1,6 @@
+import pygame
+import sys
+
 rutas = {
     "Arad": {"Zerind": 75, "Sibiu": 140, "Timisoara": 118},
     "Bucharest": {"Fagaras": 211, "Pitesti": 101, "Giurgiu": 90, "Urziceni": 85},
@@ -21,26 +24,16 @@ rutas = {
     "Zerind": {"Arad": 75, "Oradea": 71}
 }
 
-
-def breadth_first_search(nodoInicial, nodoFinal): # Busca todos los caminos y los recorre al mismo momento
-    frontier=[nodoInicial]
-    visited=[nodoInicial]
-    recorridos=[]
-
-    while(True):
-        if (frontier[0]==nodoFinal): # si ya encontro a el nodoFinal
-            return find_path(nodoInicial, nodoFinal, recorridos) #Este solo retorna la solucion 
-        if (frontier==[]):
-            return "No hay solucion"
-        
-        hijos=list(rutas[frontier[0]].keys())
-        for hijo in hijos:
-            if hijo not in visited:
-                visited+=[hijo]
-                frontier+=[hijo]
-                recorridos+=[(frontier[0],hijo)] # Aqui registramos los caminos en tuplas (padre,hijo) para imprimir la solucion al final
-        
-        frontier=frontier[1:]
+posiciones = {
+    "Arad": (100, 100), "Zerind": (80, 50), "Oradea": (150, 50),
+    "Sibiu": (200, 120), "Timisoara": (80, 200), "Lugoj": (150, 250),
+    "Mehadia": (150, 300), "Drobeta": (150, 350), "Craiova": (250, 350),
+    "Rimnicu Vilcea": (250, 200), "Fagaras": (300, 120),
+    "Pitesti": (300, 250), "Bucharest": (400, 300),
+    "Giurgiu": (400, 380), "Urziceni": (480, 250),
+    "Hirsova": (550, 200), "Eforie": (600, 250),
+    "Vaslui": (500, 150), "Iasi": (480, 80), "Neamt": (550, 50)
+}
 
 def find_path(nodoInicial, nodoFinal, recorridos):
     path =[nodoFinal]
@@ -49,6 +42,131 @@ def find_path(nodoInicial, nodoFinal, recorridos):
             if padreHijo[1]== nodoFinal:
                 nodoFinal =padreHijo[0]
                 path =[nodoFinal]+path
-    
     return path
-    
+
+def breadth_first_search_step(nodoInicial, nodoFinal):
+
+    frontier=[nodoInicial]
+    visited=[nodoInicial]
+    recorridos=[]
+
+    while(True):
+
+        if (frontier==[]):
+            yield visited, frontier, None, []
+            return
+
+        nodoActual = frontier[0]
+
+        yield visited, frontier, nodoActual, []
+
+        if (nodoActual==nodoFinal):
+            path = find_path(nodoInicial, nodoFinal, recorridos)
+            yield visited, frontier, nodoActual, path
+            return
+        
+        hijos=list(rutas[nodoActual].keys())
+        for hijo in hijos:
+            if hijo not in visited:
+                visited+=[hijo]
+                frontier+=[hijo]
+                recorridos+=[(nodoActual,hijo)]
+        
+        frontier=frontier[1:]
+
+pygame.init()
+
+WIDTH, HEIGHT = 700, 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("BFS Rumania")
+
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+GREEN = (0,255,0)
+BLUE = (0,0,255)
+RED = (255,0,0)
+YELLOW = (255,255,0)
+GRAY = (200,200,200)
+
+font = pygame.font.SysFont(None, 22)
+
+button_rect = pygame.Rect(250, 730, 200, 50)
+
+def draw_graph(visited, frontier, current, path):
+    screen.fill(WHITE)
+
+    for ciudad in rutas:
+        for vecino in rutas[ciudad]:
+            pygame.draw.line(screen, GRAY, posiciones[ciudad], posiciones[vecino], 2)
+
+    for ciudad, pos in posiciones.items():
+        color = WHITE
+
+        if ciudad in visited:
+            color = GREEN
+        if ciudad in frontier:
+            color = BLUE
+        if ciudad in path:
+            color = YELLOW
+
+        pygame.draw.circle(screen, color, pos, 15)
+        pygame.draw.circle(screen, BLACK, pos, 15, 2)
+
+        texto = font.render(ciudad, True, BLACK)
+        screen.blit(texto, (pos[0]-30, pos[1]-30))
+
+    if current:
+        pygame.draw.circle(screen, RED, posiciones[current], 10)
+
+    pygame.draw.rect(screen, GRAY, button_rect)
+    text = font.render("Iniciar", True, BLACK)
+    screen.blit(text, (button_rect.x+60, button_rect.y+15))
+
+    legend_y = 600
+    legends = [
+        ("Visitado", GREEN),
+        ("Frontera", BLUE),
+        ("Actual", RED),
+        ("Camino", YELLOW)
+    ]
+
+    for i, (txt, color) in enumerate(legends):
+        pygame.draw.rect(screen, color, (20, legend_y + i*25, 20, 20))
+        label = font.render(txt, True, BLACK)
+        screen.blit(label, (50, legend_y + i*25))
+
+def main():
+    clock = pygame.time.Clock()
+
+    running = False
+    generator = None
+
+    visited, frontier, current, path = [], [], None, []
+
+    start = "Arad"
+    end = "Bucharest"
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    generator = breadth_first_search_step(start, end)
+                    running = True
+                    visited, frontier, current, path = [], [], None, []
+
+        if running and generator:
+            try:
+                visited, frontier, current, path = next(generator)
+                pygame.time.delay(250)
+            except StopIteration:
+                running = False
+
+        draw_graph(visited, frontier, current, path)
+        pygame.display.flip()
+        clock.tick(60)
+
+main()
