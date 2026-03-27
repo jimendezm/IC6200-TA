@@ -1,82 +1,87 @@
-
-matriz=[ # Los 0 son celdas bloqueadas y 1 las que si tienen camino
-    [0,0,0,0,0,1],
-    [0,1,1,0,0,1],
-    [0,0,1,0,0,1],
-    [0,1,1,1,1,1],
-    [0,1,0,1,0,0],
-    [0,1,0,1,0,0],
-]
-
 class Cell:
-    def __init__(self, pos, distancia):
-        
+    def __init__(self, pos, g, h):
+        self.pos = pos
+        self.g = g
+        self.h = h
+        self.f = g + h
 
 
-def a_search(puntoInicio, puntoFinal): #formato (fila,columna)
-    contador=0 # Distancia que recorrerá
+def weightForCurrentNode(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-    cantFilas=len(matriz)-1 #Esto para saber el limite
-    cantColumn=len(matriz[0])-1
 
-    visited=[] #Los puntos que ya fueron visitados
+def a_search(puntoInicio, puntoFinal):
 
-    frontier=[] #Estos van a ser los puntos donde tienen más de un camino, para devolverse
+    cantFilas = len(matriz) - 1
+    cantColumn = len(matriz[0]) - 1
 
-    puntoActual=puntoInicio
+    visited = [] 
+    frontier = [] 
+
+    # empezamos con el nodo inicial
+    inicio = Cell(puntoInicio, 0, weightForCurrentNode(puntoInicio, puntoFinal))
+    frontier += [inicio]
+
     while(True):
-        visited+=[puntoActual]
-        if(puntoActual==puntoFinal):
-            return contador
-        distancias=[] # Se guardaria en tuplas de  (fila,columna, distancia) *la distancia del destino
-        #Aqui vamos a revisar los caminos disponibles del punto actual
-        if(puntoActual[0]-1 >= 0): # Movimiento arriba
-            if((puntoActual[0]-1,puntoActual[1]) not in visited):
-                if(matriz[puntoActual[0]-1][puntoActual[1]]==1 ):
-                    distancia=abs(puntoActual[0]-1 - puntoFinal[0]) + abs(puntoActual[1]-puntoFinal[1])
-                    distancias+=[(puntoActual[0]-1,puntoActual[1],distancia)]
-        if(puntoActual[0]+1<=cantFilas): #Movimiento abajo
-            if((puntoActual[0]+1,puntoActual[1]) not in visited):
-                if(matriz[puntoActual[0]+1][puntoActual[1]]==1 ):
-                    distancia=abs(puntoActual[0]+1 - puntoFinal[0]) + abs(puntoActual[1]-puntoFinal[1])
-                    distancias+=[(puntoActual[0]+1,puntoActual[1],distancia)]
-        if(puntoActual[1]+1<=cantColumn): #Movimiento derecha
-            if((puntoActual[0],puntoActual[1]+1) not in visited):
-                if(matriz[puntoActual[0]][puntoActual[1]+1]==1 ):
-                    distancia=abs(puntoActual[0] - puntoFinal[0]) + abs(puntoActual[1]+1-puntoFinal[1])
-                    distancias+=[(puntoActual[0],puntoActual[1]+1,distancia)]
-        if(puntoActual[1]-1>=0): #Movimiento izquierda
-            if((puntoActual[0],puntoActual[1]-1) not in visited):
-                if(matriz[puntoActual[0]][puntoActual[1]-1]==1 ):
-                    distancia=abs(puntoActual[0] - puntoFinal[0]) + abs(puntoActual[1]-1-puntoFinal[1])
-                    distancias+=[(puntoActual[0],puntoActual[1]-1,distancia)]
-        
-        if (len(distancias)>=2):
-            frontier+=[(puntoActual[0],puntoActual[1],len(distancias)-1)] #Guarda coordenadas y cantidad de caminos que le quedan
 
-        if(distancias!=[]):
-            #Se toma la decision
-            menor = distancias[0]
+        if frontier == []:
+            return "No hay solucion"
+        menor = frontier[0]
+        for nodo in frontier:
+            if nodo.f < menor.f:
+                menor = nodo
 
-            for punto in distancias:
-                if punto[2]<menor[2]:
-                    menor=punto
+        puntoActual = menor.pos
+        g_actual = menor.g
 
-            puntoActual=(menor[0],menor[1])
-            contador+=1
-        else:
-            if(frontier!=[]):
-                # Se regresa al punto anterior donde tiene otros caminos y busca el mejor
-                puntoActual=(frontier[-1][0],frontier[-1][1])
-                nuevo_punto=(frontier[-1][0],frontier[-1][1],frontier[-1][2]-1) # restaura la cantidad de caminos que tiene
-                frontier=frontier[:-1]
-                frontier+=[nuevo_punto]
-                if(frontier[-1][2]==0):
-                    frontier=frontier[:-1]
-            else:
-                return "No hay solucion"
+        frontier.remove(menor)
+        visited += [puntoActual]
 
+        if(puntoActual == puntoFinal):
+            return g_actual
 
+        distancias = []  # ahora guardará objetos Cell
 
+        # ARRIBA
+        if(puntoActual[0]-1 >= 0):
+            nueva = (puntoActual[0]-1, puntoActual[1])
+            if(nueva not in visited and matriz[nueva[0]][nueva[1]] == 1):
+                g = g_actual + 1
+                h = weightForCurrentNode(nueva, puntoFinal)
+                distancias += [Cell(nueva, g, h)]
 
-        
+        # ABAJO
+        if(puntoActual[0]+1 <= cantFilas):
+            nueva = (puntoActual[0]+1, puntoActual[1])
+            if(nueva not in visited and matriz[nueva[0]][nueva[1]] == 1):
+                g = g_actual + 1
+                h = weightForCurrentNode(nueva, puntoFinal)
+                distancias += [Cell(nueva, g, h)]
+
+        # DERECHA
+        if(puntoActual[1]+1 <= cantColumn):
+            nueva = (puntoActual[0], puntoActual[1]+1)
+            if(nueva not in visited and matriz[nueva[0]][nueva[1]] == 1):
+                g = g_actual + 1
+                h = weightForCurrentNode(nueva, puntoFinal)
+                distancias += [Cell(nueva, g, h)]
+
+        # IZQUIERDA
+        if(puntoActual[1]-1 >= 0):
+            nueva = (puntoActual[0], puntoActual[1]-1)
+            if(nueva not in visited and matriz[nueva[0]][nueva[1]] == 1):
+                g = g_actual + 1
+                h = weightForCurrentNode(nueva, puntoFinal)
+                distancias += [Cell(nueva, g, h)]
+
+        # en vez de elegir uno, agregamos TODOS a frontier
+        for nodo in distancias:
+
+            existe = False
+            for f in frontier:
+                if f.pos == nodo.pos and f.f <= nodo.f:
+                    existe = True
+                    break
+
+            if not existe:
+                frontier += [nodo]
