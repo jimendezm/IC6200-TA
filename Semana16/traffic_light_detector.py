@@ -7,16 +7,17 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from PIL import Image
 
 
-IMG_SIZE     = (32, 32)
-BATCH_SIZE   = 64
-EPOCHS       = 20
-NUM_CLASSES  = 43
-DATA_DIR     = "archive"
-MODEL_PATH   = "models/traffic_sign_model.h5"
+IMG_SIZE = (32, 32)
+BATCH_SIZE = 64
+EPOCHS = 20
+NUM_CLASSES = 43
+DATA_DIR = "archive"
+MODEL_PATH = "models/traffic_sign_model.h5"
 HISTORY_PATH = "models/history.pkl"
 
 CLASS_NAMES = [
@@ -114,11 +115,9 @@ def build_model(input_shape=(32, 32, 3), num_classes=NUM_CLASSES):
 def train(data_dir=DATA_DIR):
     x_train, y_train, x_test, y_test = load_data(data_dir)
 
-    split    = int(len(x_train) * 0.8)
-    x_val    = x_train[split:]
-    y_val    = y_train[split:]
-    x_train  = x_train[:split]
-    y_train  = y_train[:split]
+    x_train, x_val, y_train, y_val = train_test_split(
+        x_train, y_train, test_size=0.2, random_state=42, stratify=y_train
+    )
 
     train_ds = _make_dataset(x_train, y_train, augment=True)
     val_ds   = _make_dataset(x_val,   y_val,   augment=False)
@@ -177,7 +176,13 @@ def predict(model, image_path, top_k=5):
 
 
 def load_model(path=MODEL_PATH):
-    return keras.models.load_model(path)
+    model = keras.models.load_model(path)
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+    return model
 
 
 def _save_plots(h, y_true, y_pred):
