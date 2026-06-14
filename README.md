@@ -20,3 +20,11 @@ Introducción a algoritmos más eficientes y estrategias de optimización.
 
 - `greedy.py`: Implementación de un algoritmo **voraz (greedy)**, que toma decisiones locales óptimas.
 - `astar.py`: Implementación del algoritmo **A\***, que utiliza heurísticas para encontrar rutas óptimas de manera eficiente.
+
+---
+### Semana 16
+Reconocimiento de señales de tránsito mediante una red neuronal convolucional (CNN) entrenada sobre el dataset **GTSRB (German Traffic Sign Recognition Benchmark)**, con 43 clases distintas.
+
+- `traffic_light_detector.py`: Definición del modelo CNN, carga de datos, entrenamiento, evaluación y predicción.
+- `ui.py`: Interfaz gráfica para cargar imágenes y visualizar las predicciones del modelo.
+- `main.py`: Script de entrada para ejecutar el entrenamiento.
